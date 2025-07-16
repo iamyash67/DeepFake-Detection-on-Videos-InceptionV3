@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Detection</title>
+    <style>
+       
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            text-align: center;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .header-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #333;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background: #444;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #777;
+        }
+        .video-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+        }
+        .preview-box {
+            border: 2px solid #555;
+            padding: 10px;
+            border-radius: 10px;
+            width: 320px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #222;
+            margin-top: 20px;
+            position: relative;
+        }
+        #videoPreview {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+            border-radius: 5px;
+        }
+        #result {
+            color: red;
+            font-size: 18px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #confidence {
+            color: white;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <button onclick="home()">Home</button>
+        <button onclick="showDetection()">Detection</button>
+        <button onclick="showEvaluation()">Evaluation</button>
+    </header>
+    
+    <div id="home">
+        <!--<h1>Deepfake Detection on Videos</h1>-->
+        <!--<img src="static/deepfake_example.png" alt="Deepfake Example">-->
+        <img src="static/deepfake_example.png" alt="Deepfake Example" class="header-image">
+
+    </div>
+    
+    <div id="detection" class="video-container" style="display: none;">
+        <input type="file" id="videoInput" accept="video/*" onchange="previewFile()">
+        <button onclick="uploadVideo()">Upload Video</button>
+        <div class="preview-box" id="previewBox">
+            <video id="videoPreview" controls></video>
+            <span id="fileName">Selected Video</span>
+        </div>
+        <p id="result"></p>
+        <p id="confidence"></p>
+        <p id="accuracy"></p>
+        <p id="precision"></p>
+    </div>
+    
+    <div id="metrics" style="display: none;">
+        <h2>Evaluation Metrics</h2>
+        <img src="static/accuracy.png" alt="Accuracy Metric">
+        <img src="static/precision.png" alt="Precision Metric">
+        <img src="static/recall.png" alt="Recall Metric">
+        <img src="static/loss.png" alt="Loss Metric">
+    </div>
+    
+    <script>
+        function home() {
+            document.getElementById("home").style.display = "block";
+            document.getElementById("detection").style.display = "none";
+            document.getElementById("metrics").style.display = "none";
+        }
+        function showDetection() {
+            document.getElementById("home").style.display = "none";
+            document.getElementById("detection").style.display = "flex";
+            document.getElementById("metrics").style.display = "none";
+        }
+        function showEvaluation() {
+            document.getElementById("home").style.display = "none";
+            document.getElementById("detection").style.display = "none";
+            document.getElementById("metrics").style.display = "block";
+        }
+        function previewFile() {
+            const fileInput = document.getElementById("videoInput");
+            const previewBox = document.getElementById("previewBox");
+            const videoPreview = document.getElementById("videoPreview");
+            const fileName = document.getElementById("fileName");
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileName.style.display = "none";
+                videoPreview.src = URL.createObjectURL(file);
+                videoPreview.style.display = "block";
+            } else {
+                videoPreview.style.display = "none";
+                fileName.style.display = "block";
+                fileName.textContent = "Selected Video";
+            }
+        }
+        function uploadVideo() {
+            const fileInput = document.getElementById("videoInput");
+            if (fileInput.files.length === 0) {
+                alert("Please select a video file.");
+                return;
+            }
+            const formData = new FormData();
+            formData.append("video", fileInput.files[0]);
+            
+            fetch("/predict", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").textContent = `Prediction: ${data.result}`;
+                document.getElementById("confidence").textContent = `Confidence: ${data.confidence.toFixed(2)}`;
+                document.getElementById("accuracy").textContent = `Accuracy: ${data.accuracy}`;
+                document.getElementById("precision").textContent = `Precision: ${data.precision}`;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
